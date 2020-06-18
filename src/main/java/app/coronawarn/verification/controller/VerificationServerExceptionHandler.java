@@ -39,7 +39,7 @@ import org.springframework.web.context.request.WebRequest;
  */
 @Slf4j
 @RestControllerAdvice
-public class VerificationExceptionHandler {
+public class VerificationServerExceptionHandler {
 
   /**
    * This method handles unknown Exceptions and Server Errors.

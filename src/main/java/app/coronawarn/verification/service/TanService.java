@@ -208,6 +208,25 @@ public class TanService {
     return teleTan;
   }
 
+
+
+  /**
+   * This Method gets and updates a Teletan to be redeemed if that was possible true is returned.
+   *
+   * @param key represents the Tan id
+   * @return a valid tan with given source of Trust
+   */
+  public boolean redeemAndPersistTeletan(String key) {
+    Optional<VerificationTan> optional = getEntityByTan(key);
+    if (optional.isPresent()) {
+      VerificationTan teleTan = optional.get();
+      teleTan.setRedeemed(true);
+      saveTan(teleTan);
+      return true;
+    }
+    return false;
+  }
+
   /**
    * This Method generates a valid TAN and persists it. Returns the generated TAN.
    *

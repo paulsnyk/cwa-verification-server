@@ -84,38 +84,25 @@ public class AppSessionService {
    * @return an {@link ResponseEntity}
    */
   public ResponseEntity<RegistrationToken> generateRegistrationToken(String key, RegistrationTokenKeyType keyType) {
-    String registrationToken;
-    VerificationAppSession appSession;
-
     switch (keyType) {
       case GUID:
         if (checkRegistrationTokenAlreadyExistsForGuid(key)) {
           log.warn("The registration token already exists for the hashed guid.");
         } else {
           log.info("Start generating a new registration token for the given hashed guid.");
-          registrationToken = generateRegistrationToken();
-          appSession = generateAppSession(registrationToken);
-          appSession.setHashedGuid(key);
-          appSession.setSourceOfTrust(AppSessionSourceOfTrust.HASHED_GUID);
-          saveAppSession(appSession);
           return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(new RegistrationToken(registrationToken));
+            .body(new RegistrationToken(generateAndPersistAppSession(key,AppSessionSourceOfTrust.HASHED_GUID)));
         }
         break;
       case TELETAN:
         if (checkRegistrationTokenAlreadyExistForTeleTan(key)) {
           log.warn("The registration token already exists for this TeleTAN.");
         } else {
-          log.info("Start generating a new registration token for the given tele TAN.");
-          registrationToken = generateRegistrationToken();
-          appSession = generateAppSession(registrationToken);
-          appSession.setTeleTanHash(hashingService.hash(key));
-          appSession.setSourceOfTrust(AppSessionSourceOfTrust.TELETAN);
-          saveAppSession(appSession);
+          log.info("Start generating a new registration token for the given teleTAN.");
           return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(new RegistrationToken(registrationToken));
+            .body(new RegistrationToken(generateAndPersistAppSession(key,AppSessionSourceOfTrust.TELETAN)));
         }
         break;
       default:
@@ -180,4 +167,18 @@ public class AppSessionService {
   public boolean verifyHashedGuid(String hashedGuid) {
     return hashingService.isHashValid(hashedGuid);
   }
+
+  private String generateAndPersistAppSession(String key, AppSessionSourceOfTrust sourceOfTrust) {
+    String registrationToken = generateRegistrationToken();
+    VerificationAppSession appSession = generateAppSession(registrationToken);
+    if (sourceOfTrust == AppSessionSourceOfTrust.HASHED_GUID) {
+      appSession.setHashedGuid(key);
+    } else {
+      appSession.setTeleTanHash(hashingService.hash(key));
+    }
+    appSession.setSourceOfTrust(sourceOfTrust);
+    saveAppSession(appSession);
+    return registrationToken;
+  }
 }
+
